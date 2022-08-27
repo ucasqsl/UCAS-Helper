@@ -100,5 +100,9 @@ URLS = {
     'base_evaluate_url':{
         'http':'http://jwxk.ucas.ac.cn/evaluate/',
         'https':'https://jwxk.ucas.ac.cn/evaluate/'
+    },
+    'base_select_url':{
+        'http':'http://jwxk.ucas.ac.cn/courseManage/main',
+        'https':'https://jwxk.ucas.ac.cn/courseManage/main'
     }
 }

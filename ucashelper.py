@@ -6,6 +6,7 @@
 # @WebSite : https://www.gentlecp.com
 
 
+from select import select
 import click
 import sys
 import os
@@ -16,6 +17,7 @@ from core.assess import Assesser
 from core.grade import GradeObserver
 from core.download import Downloader
 from core.wifi import WifiLoginer
+from core.course import CourseSelector
 
 import settings
 
@@ -83,9 +85,13 @@ def logout_wifi():
     wifiLoginer = WifiLoginer(accounts_path=settings.ACCOUNTS_PATH)
     wifiLoginer.logout()
 
+@click.command(name='course', help='Select course')
+def select_course():
+    course_selector = CourseSelector(urls=settings.URLS, course_config_path='config.json')
+    course_selector.run()
 
 if __name__ == '__main__':
-    commands = [UI,auto_assess,download_source,query_grades,hack_accounts,login_wifi,logout_wifi, config]
+    commands = [UI,auto_assess,download_source,query_grades,hack_accounts,login_wifi,logout_wifi, config, select_course]
     for command in commands:
         start.add_command(command)
     start()
