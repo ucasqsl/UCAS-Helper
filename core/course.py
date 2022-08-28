@@ -24,6 +24,7 @@ from PIL import Image
 from util.ocr import do_ocr
 import pandas as pd
 from ddddocr import DdddOcr
+from time import sleep
 
 class CourseSelector(Loginer):
     """
@@ -61,6 +62,25 @@ class CourseSelector(Loginer):
         action = form.attrs['action']
         self._s = action.split("?")
 
+    def _get_selected_course(self):
+        try:
+            res = self._S.get(self._urls['base_select_url']['http'], headers=self.headers, timeout=5)
+        except requests.Timeout:
+            res = self._S.get(self._urls['base_select_url']['https'],headers=self.headers)
+        bs4obj = BeautifulSoup(res.text, 'html.parser')
+        thead = bs4obj.find('thead')
+        data = []
+        columns = [x.string for x in thead.find_all('th')[:-3]]
+        tbody = bs4obj.find('tbody')
+        for tr in tbody.find_all('tr'):
+            # tr:每一门课程信息
+            tds = tr.find_all('td')
+            ids = [x.find("a").string.strip() for x in tds[:2]]
+            row = ids + [x.text.lstrip().rstrip() for x in tds[2:-4]] + [tds[-4].find("a").string.strip()]
+            data.append(row)
+        df = pd.DataFrame(data, columns = columns)
+        self._selected_course = df
+
     def _get_courses(self):
         deptIds = []
         for department in self.depts:
@@ -70,25 +90,20 @@ class CourseSelector(Loginer):
             "sb": 0
         }
         self.deptIds = deptIds
-        print(post_data)
         try:
             res = self._S.post(self._urls['base_url']['http'] + f"/courseManage/selectCourse?{self._s}", data = post_data, headers=self.headers, timeout=5)
         except requests.Timeout:
             res = self._S.post(self._urls['base_url']['https'] + f"/courseManage/selectCourse?{self._s}", data = post_data, headers=self.headers)
         bs4obj = BeautifulSoup(res.text, 'html.parser')
         thead = bs4obj.find('thead')
-        pt = PrettyTable()
-        
         data = []
         columns = [x.string for x in thead.find_all('th')]
-        pt.field_names = columns
         tbody = bs4obj.find('tbody')
         for tr in tbody.find_all('tr'):
             # tr:每一门课程信息
             tds = tr.find_all('td')
             ids = [x.find("input").attrs["value"] for x in tds[:3]]
-            row = ids + [x.string.strip() for x in tr.find_all('td')[3:]]
-            pt.add_row(row)
+            row = ids + [x.string.strip() for x in tds[3:]]
             data.append(row)
         df = pd.DataFrame(data, columns = columns)
         # print(pt)
@@ -115,7 +130,14 @@ class CourseSelector(Loginer):
         return validate
 
     def _select_course(self):
-        course_ids = self._df.loc[self._df['课程编码'].isin(self.course_ids)]['选课']
+        self._df['限选'] = self._df['限选'].transform(int)
+        self._df['已选'] = self._df['已选'].transform(int)
+        course_ids = self._df.loc[
+            self._df['课程编码'].isin(self.course_ids)
+            & (self._df['限选'] > self._df['已选'])]['选课']
+        if len(course_ids) == 0:
+            self._logger.info(f"Courses not enough for {self.course_ids}")
+            return
         vcode=self._validate()
         post_data = {
             "_csrftoken":"",
@@ -143,8 +165,19 @@ class CourseSelector(Loginer):
     def run(self):
         self.login()
         self._get_action()
-        self._get_courses()
-        self._select_course()
+        while self.course_ids:
+            self._get_selected_course()
+            course_todo = []
+            for i in self.course_ids:
+                if i not in self._selected_course['课程编码'].unique():
+                    course_todo.append(i)
+            self.course_ids = course_todo
+            if self.course_ids:
+                self._get_courses()
+                self._select_course()
+            else:
+                return
+            sleep(1)
 
 
 import settings
