@@ -41,7 +41,6 @@ class CourseSelector(Loginer):
         self.course_ids = course_config['course_ids']
         self._logger = LogHandler('CourseSelector')
         self.ocr = DdddOcr(det=False, ocr=False, import_onnx_path="models/ucas_ocr_1.0_6_2000_2022-08-27-15-33-41.onnx", charsets_path="models/charsets.json")
-        self.num_ocr = DdddOcr()
 
     def _get_action(self):
         try:
@@ -136,7 +135,12 @@ class CourseSelector(Loginer):
         if len(course_ids) == 0:
             self._logger.info(f"Courses not enough for {self.course_ids}")
             return
-        vcode=self._validate()
+        while True:
+            try:
+                vcode=self._validate()
+            except:
+                continue
+            break
         post_data = {
             "_csrftoken":"",
             "deptIds":self.deptIds,
