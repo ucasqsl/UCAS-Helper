@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 -----------------Init-----------------------
-            Name: grade.py
+            Name: course.py
             Description:
-            Author: GentleCP
-            Email: 574881148@qq.com
-            WebSite: https://www.gentlecp.com
-            Date: 2020-08-31 
+            Author: ucasqsl
+            Email: qinsiliang18@mails.ucas.ac.cn
 -------------Change Logs--------------------
 
 
@@ -28,7 +26,7 @@ from time import sleep
 
 class CourseSelector(Loginer):
     """
-    课程成绩查看器
+    课程选择器
     """
 
     def __init__(self,
