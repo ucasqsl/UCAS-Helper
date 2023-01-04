@@ -100,7 +100,7 @@ class CourseSelector(Loginer):
             # tr:每一门课程信息
             tds = tr.find_all('td')
             ids = [x.find("input").attrs["value"] for x in tds[:3]]
-            row = ids + [x.string.strip() for x in tds[3:]]
+            row = ids + [x.string.strip() if x.string else "" for x in tds[3:]]
             data.append(row)
         df = pd.DataFrame(data, columns = columns)
         # print(pt)
