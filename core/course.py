@@ -168,15 +168,21 @@ class CourseSelector(Loginer):
         self.login()
         self._get_action()
         while self.course_ids:
-            self._get_selected_course()
+            try:
+                self._get_selected_course()
+            except: 
+                continue
             course_todo = []
             for i in self.course_ids:
                 if i not in self._selected_course['课程编码'].unique():
                     course_todo.append(i)
             self.course_ids = course_todo
             if self.course_ids:
-                self._get_courses()
-                self._select_course()
+                try:
+                    self._get_courses()
+                    self._select_course()
+                except:
+                    continue
             else:
                 return
             sleep(1)
